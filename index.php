@@ -119,34 +119,7 @@ class MyDB extends SQLite3
 	}
 }
 
-$db = new MyDB();
-
-if ($_POST["create"]) {
-	$result = $db->addAccount($_POST["name"], $_POST["password"]);
-	header("Location: ./");
-	exit;
-}
-if ($_POST["update"]) {
-	$db->updateAccount($_POST["update"], $_POST["password"]);
-	header("Location: ./");
-	exit;
-}
-if ($_POST["delete"]) {
-	$db->deleteAccount($_POST["delete"]);
-	header("Location: ./");
-	exit;
-}
-
-?>
-<html>
-<head>
-	<title>strongSwan secrets</title>
-	<link rel="stylesheet" type="text/css" href="default.css" media="screen">
-</head>
-<body>
-	<h1>strongswan manage eap secrets</h1>
-<?php
-if ($_GET["create"]) {
+function drawCreateForm() {
 ?>
 <form method="POST" action="./">
 	<table>
@@ -159,12 +132,16 @@ if ($_GET["create"]) {
 			<td><input type="password" name="password" /></td>
 		</tr>
 	</table>
-	<input type="hidden" name="create" value="1" />
+	<input type="hidden" name="action" value="create" />
 	<button type="submit">create</button>
 </form>
-<?
-} else if ($_GET["update"]) {
-	$ide = $db->findIdentityById($_GET["update"]);
+<?php
+}
+
+function drawUpdateForm($id) {
+	global $db;
+
+	$ide = $db->findIdentityById($id);
 ?>
 <form method="POST" action="./">
 	<table>
@@ -177,15 +154,20 @@ if ($_GET["create"]) {
 			<td><input type="password" name="password" value="<?php echo $ide["password"] ?>" /></td>
 		</tr>
 	</table>
-	<input type="hidden" name="update" value="<?php echo $ide["id"] ?>" />
+	<input type="hidden" name="action" value="update" />
+	<input type="hidden" name="id" value="<?php echo $ide["id"] ?>" />
 	<button type="submit">update</button>
 </form>
-<?
-} else {
+<?php
+}
+
+function drawList() {
+	global $db;
+
 ?>
 <div style='margin-bottom:1em;'>
 	<form method="GET" action="./">
-		<input type="hidden" name="create" value="1" />
+		<input type="hidden" name="action" value="create" />
 		<button type="submit">create new</button>
 	</form>
 </div>
@@ -205,11 +187,13 @@ if ($_GET["create"]) {
 		<td><?php echo $row['data']; ?></td>
 		<td>
 			<form method="GET" action="./">
-				<input type="hidden" name="update" value="<?php echo $row["id"] ?>" />
+				<input type="hidden" name="action" value="update" />
+				<input type="hidden" name="id" value="<?php echo $row["id"] ?>" />
 				<button type="submit">update</button>
 			</form>
 			<form method="POST" action="./">
-				<input type="hidden" name="delete" value="<?php echo $row["id"] ?>" />
+				<input type="hidden" name="action" value="delete" />
+				<input type="hidden" name="id" value="<?php echo $row["id"] ?>" />
 				<button type="submit">delete</button>
 			</form>
 		</td>
@@ -217,6 +201,52 @@ if ($_GET["create"]) {
 <?php } ?>
 	</tbody>
 </table>
-<?php } ?>
+<?php
+}
+
+$db = new MyDB();
+$action = filter_input(INPUT_POST, "action");
+switch ($action) {
+case "create":
+	$name = filter_input(INPUT_POST, "name");
+	$password = filter_input(INPUT_POST, "password");
+	$result = $db->addAccount($name, $password);
+	header("Location: ./");
+	exit;
+case "update":
+	$id = filter_input(INPUT_POST, "id");
+	$password = filter_input(INPUT_POST, "password");
+	$db->updateAccount($id, $password);
+	header("Location: ./");
+	exit;
+case "delete":
+	$id = filter_input(INPUT_POST, "id");
+	$db->deleteAccount($id);
+	header("Location: ./");
+	exit;
+}
+
+?>
+<html>
+<head>
+	<title>strongSwan secrets</title>
+	<link rel="stylesheet" type="text/css" href="default.css" media="screen">
+</head>
+<body>
+	<h1>strongswan manage eap secrets</h1>
+<?php
+switch (filter_input(INPUT_GET, "action")) {
+case "create":
+	drawCreateForm();
+	break;
+case "update":
+	$id = filter_input(INPUT_GET, "id");
+	drawUpdateForm($id);
+	break;
+default:
+	drawList();
+	break;
+}
+?>
 </body>
 </html>
