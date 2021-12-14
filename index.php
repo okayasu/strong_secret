@@ -89,6 +89,13 @@ class MyDB extends SQLite3
 		return $stmt->execute();
 	}
 
+	function deleteJoinBySecret($ide)
+	{
+		$stmt = $this->prepare("DELETE FROM shared_secret_identity WHERE shared_secret = :ide");
+		$stmt->bindValue(':ide', $ide, SQLITE3_INTEGER);
+		return $stmt->execute();
+	}
+
 	function addAccount($name, $password)
 	{
 		$this->addIdentity($name);
@@ -113,8 +120,8 @@ class MyDB extends SQLite3
 		$result = $stmt->execute();
 		while($row = $result->fetchArray()) {
 			$this->deleteSecret($row['shared_secret']);
+			$this->deleteJoinBySecret($row['shared_secret']);
 		}
-		$this->deleteJoinByIdentity($ide['id']);
 		$this->deleteIdentity($ide['id']);
 	}
 }
