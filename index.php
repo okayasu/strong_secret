@@ -96,7 +96,7 @@ class MyDB extends SQLite3
 		$this->addSecret($password);
 		$sec = $this->lastInsertRowID();
 		$this->addJoin($ide, $sec);
-		$this->addJoin($this->hostrow, $sec);
+		$this->addJoin($this->hostrow['id'], $sec);
 	}
 
 	function updateAccount($id, $password)
